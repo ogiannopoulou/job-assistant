@@ -1,0 +1,100 @@
+{
+  "name": "Demo User",
+  "email": "user@example.com",
+  "phone": "+00 000 000 0000",
+  "location": "Your City, Your Country",
+  "languages": {
+    "English": "fluent"
+  },
+  "education": [
+    {
+      "degree": "Bachelor's in Computer Science",
+      "institution": "University of Example",
+      "year": 2020,
+      "thesis": ""
+    }
+  ],
+  "experience": [
+    {
+      "role": "Software Engineer",
+      "institution": "Tech Company",
+      "period": "2020 – Present",
+      "topics": [
+        "Full-stack development",
+        "Python",
+        "JavaScript",
+        "Cloud services",
+        "Agile methodology",
+        "Code review"
+      ],
+      "collaborators": []
+    }
+  ],
+  "technical_skills": {
+    "programming": [
+      "Python",
+      "JavaScript",
+      "TypeScript",
+      "SQL"
+    ],
+    "frameworks": [
+      "React",
+      "Node.js",
+      "Django",
+      "Flask"
+    ],
+    "cloud_devops": [
+      "AWS",
+      "Docker",
+      "CI/CD",
+      "Linux"
+    ],
+    "data_ml": [
+      "Pandas",
+      "Machine Learning",
+      "Data Analysis",
+      "SQL"
+    ],
+    "soft_skills": [
+      "Communication",
+      "Problem-solving",
+      "Teamwork",
+      "Time management"
+    ],
+    "languages": [
+      "English (fluent)"
+    ]
+  },
+  "publications": [],
+  "target_roles": [
+    "Software Engineer",
+    "Full-Stack Developer",
+    "Data Scientist",
+    "DevOps Engineer",
+    "Technical Product Manager"
+  ],
+  "target_companies_institutions": [
+    "Tech startups",
+    "Software companies",
+    "Remote-first companies"
+  ],
+  "preferences": {
+    "remote": true,
+    "min_salary_eur": 50000,
+    "eu_mobility": true,
+    "location_flexibility": "remote",
+    "work_life_balance": 4,
+    "stress_tolerance": 3,
+    "family_proximity": 3,
+    "travel_opportunity": 3,
+    "prefer_industry": true,
+    "prefer_remote_first": true,
+    "prefer_no_weekends": true,
+    "prefer_flexible_hours": true,
+    "max_commute_minutes": 0
+  },
+  "portfolio_projects": [],
+  "cv_files": {
+    "Demo_User_CV_English": "data/cv_texts/Demo_User_CV_English.pdf"
+  }
+}

@@ -1,0 +1,38 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment
+.env
+*.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Output artifacts
+output/*.pdf
+output/*.tex
+output/*.docx
+output/*.aux
+output/*.log
+output/*.out
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Job data (regenerated on scan)
+data/jobs_*.csv

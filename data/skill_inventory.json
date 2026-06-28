@@ -1,0 +1,583 @@
+{
+  "Legal Procedures": {
+    "name": "Legal Procedures",
+    "categories": [
+      "legal_administrative",
+      "sectors"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      },
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      },
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      },
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 4,
+    "github_count": 0,
+    "priority": 8
+  },
+  "Court": {
+    "name": "Court",
+    "categories": [
+      "legal_administrative",
+      "sectors"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      },
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 2,
+    "github_count": 0,
+    "priority": 4
+  },
+  "Justice": {
+    "name": "Justice",
+    "categories": [
+      "legal_administrative",
+      "sectors"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      },
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 2,
+    "github_count": 0,
+    "priority": 4
+  },
+  "Law": {
+    "name": "Law",
+    "categories": [
+      "education",
+      "legal_administrative"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      },
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 2,
+    "github_count": 0,
+    "priority": 4
+  },
+  "Customer Service": {
+    "name": "Customer Service",
+    "categories": [
+      "sales_customer_service"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      },
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 2,
+    "github_count": 0,
+    "priority": 4
+  },
+  "Sales Management": {
+    "name": "Sales Management",
+    "categories": [
+      "sales_customer_service"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      },
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 2,
+    "github_count": 0,
+    "priority": 4
+  },
+  "Negotiation": {
+    "name": "Negotiation",
+    "categories": [
+      "sales_customer_service",
+      "soft_skills"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      },
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 2,
+    "github_count": 0,
+    "priority": 4
+  },
+  "Microsoft Office": {
+    "name": "Microsoft Office",
+    "categories": [
+      "it_tools"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      },
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 2,
+    "github_count": 0,
+    "priority": 4
+  },
+  "Organization": {
+    "name": "Organization",
+    "categories": [
+      "soft_skills"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      },
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 2,
+    "github_count": 0,
+    "priority": 4
+  },
+  "Problem Solving": {
+    "name": "Problem Solving",
+    "categories": [
+      "soft_skills"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      },
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 2,
+    "github_count": 0,
+    "priority": 4
+  },
+  "Administrative Skills": {
+    "name": "Administrative Skills",
+    "categories": [
+      "legal_administrative"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "Certification Services": {
+    "name": "Certification Services",
+    "categories": [
+      "legal_administrative"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "CRM": {
+    "name": "CRM",
+    "categories": [
+      "sales_customer_service"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "Customer Relationship": {
+    "name": "Customer Relationship",
+    "categories": [
+      "sales_customer_service"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "after-sales": {
+    "name": "after-sales",
+    "categories": [
+      "sales_customer_service"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "Customer Loyalty": {
+    "name": "Customer Loyalty",
+    "categories": [
+      "sales_customer_service"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "Supplier Relations": {
+    "name": "Supplier Relations",
+    "categories": [
+      "sales_customer_service"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "Mac OS": {
+    "name": "Mac OS",
+    "categories": [
+      "it_tools"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "Windows": {
+    "name": "Windows",
+    "categories": [
+      "it_tools"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "Time Management": {
+    "name": "Time Management",
+    "categories": [
+      "soft_skills"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "Communication": {
+    "name": "Communication",
+    "categories": [
+      "soft_skills"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "B2": {
+    "name": "B2",
+    "categories": [
+      "languages"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "English Language": {
+    "name": "English Language",
+    "categories": [
+      "languages"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "German Language": {
+    "name": "German Language",
+    "categories": [
+      "languages"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "Academic Exchange": {
+    "name": "Academic Exchange",
+    "categories": [
+      "education"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "Degree": {
+    "name": "Degree",
+    "categories": [
+      "education"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "Diploma": {
+    "name": "Diploma",
+    "categories": [
+      "education"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "Humboldt": {
+    "name": "Humboldt",
+    "categories": [
+      "education"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "Master": {
+    "name": "Master",
+    "categories": [
+      "education"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "Sapienza": {
+    "name": "Sapienza",
+    "categories": [
+      "education"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "University": {
+    "name": "University",
+    "categories": [
+      "education"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "degree": {
+    "name": "degree",
+    "categories": [
+      "education"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  },
+  "Ministry": {
+    "name": "Ministry",
+    "categories": [
+      "sectors"
+    ],
+    "sources": [
+      {
+        "type": "cv",
+        "name": "Demo_User_CV_English"
+      }
+    ],
+    "project_count": 0,
+    "cv_count": 1,
+    "github_count": 0,
+    "priority": 2
+  }
+}

@@ -1,0 +1,84 @@
+[
+  {
+    "cv_key": "Demo_User_CV_English",
+    "filename": "Demo_User_CV_English.pdf",
+    "path": "data/cv_texts/Demo_User_CV_English.pdf",
+    "text_path": "data/cv_texts/Demo_User.txt",
+    "text_length": 3182,
+    "skills": {
+      "legal_administrative": [
+        "Administrative",
+        "Court",
+        "Justice",
+        "Law",
+        "Legal",
+        "certification",
+        "legal"
+      ],
+      "sales_customer_service": [
+        "CRM",
+        "Customer Relationship",
+        "Customer Service",
+        "Sales",
+        "after-sales",
+        "customer loyalty",
+        "customer service",
+        "negotiation",
+        "sales",
+        "supplier relations"
+      ],
+      "it_tools": [
+        "Mac OS",
+        "Microsoft Office",
+        "Office",
+        "Windows"
+      ],
+      "soft_skills": [
+        "Organization",
+        "Problem-solving",
+        "Time Management",
+        "communication",
+        "negotiation",
+        "organization",
+        "problem-solving"
+      ],
+      "languages": [
+        "B2",
+        "English",
+        "German"
+      ],
+      "education": [
+        "Academic Exchange",
+        "Degree",
+        "Diploma",
+        "Humboldt",
+        "Law",
+        "Master",
+        "Sapienza",
+        "University",
+        "degree"
+      ],
+      "sectors": [
+        "Court",
+        "Justice",
+        "Legal",
+        "Ministry",
+        "legal"
+      ]
+    },
+    "sections_found": [
+      "header",
+      "professional profile",
+      "current position",
+      "work experience",
+      "experience",
+      "education",
+      "key skills",
+      "languages",
+      "other information"
+    ],
+    "has_experience": true,
+    "has_education": true,
+    "has_publications": false
+  }
+]
