@@ -158,6 +158,16 @@ def save_profile(profile: dict):
         json.dump(core, f, indent=2)
 
 
+def update_profile(fields: dict) -> dict:
+    p = load_profile()
+    for key, value in fields.items():
+        if key in ("_projects", "_skills", "_cvs", "_github"):
+            continue
+        p[key] = value
+    save_profile(p)
+    return load_profile()
+
+
 def summarize() -> str:
     p = load_profile()
     cv_keys = list(p.get('cv_files', {}).keys())

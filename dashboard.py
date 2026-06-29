@@ -7,6 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 import json
+import os
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -25,6 +26,8 @@ from optimizer import generate_digest, suggest_next_action, suggest_skill_gaps, 
 from preferences import show as show_prefs, set_pref as set_preference, list_keys as list_prefs
 from profile import get_search_config, save_search_config, DEFAULT_SEARCH_CONFIG
 from custom_source import list_sources, add_source, update_source, delete_source, scan_custom_source, DEFAULT_TEMPLATE
+
+DATA_DIR = Path(__file__).parent / "data"
 from job_ranker import rank_jobs, format_ranked, load_inventory as load_skill_inv
 from github_integrator import load_results as load_github_repos
 from cv_writer import rewrite_cv, auto_rewrite_cv, get_base_cv_for_job, list_available_cvs
@@ -566,84 +569,290 @@ def page_profile():
     st.title(" Profile")
     profile = load_profile_data()
 
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        st.markdown(f"### {profile['name']}")
-        st.markdown(f" {profile['location']}  ·  {profile['email']}  ·  {profile.get('phone', '')}")
-        st.markdown(f"**Languages:** {', '.join(f'{lang} ({prof})' for lang, prof in profile.get('languages', {}).items())}")
-    with col2:
-        st.markdown("**Target Roles:**")
-        for r in profile.get("target_roles", []):
-            st.markdown(f"- {r}")
+    view_tab, edit_tab, upload_tab = st.tabs([" View", " Edit", " Upload CV"])
 
-    st.divider()
-
-    edu_tab, exp_tab, skills_tab, cvs_tab = st.tabs(
-        ["Education", "Experience", "Skills", "CV Versions"]
-    )
-
-    with edu_tab:
-        for e in profile.get("education", []):
-            with st.container(border=True):
-                st.markdown(f"**{e['degree']}**  —  {e['institution']} ({e['year']})")
-                if e.get("thesis"):
-                    st.markdown(f"_Thesis:_ {e['thesis']}")
-
-    with exp_tab:
-        for e in profile.get("experience", []):
-            with st.container(border=True):
-                st.markdown(f"**{e['role']}** @ {e['institution']}")
-                st.markdown(f"_{e.get('period', '')}_")
-                if e.get("topics"):
-                    st.markdown(f"Topics: {', '.join(e['topics'])}")
-                if e.get("collaborators"):
-                    st.markdown(f"Collaborators: {', '.join(e['collaborators'])}")
-
-    with skills_tab:
-        for cat, skills in profile.get("technical_skills", {}).items():
-            st.markdown(f"**{cat.replace('_', ' ').title()}:** {', '.join(skills)}")
+    # ── View ──
+    with view_tab:
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            st.markdown(f"### {profile['name']}")
+            st.markdown(f" {profile['location']}  ·  {profile['email']}  ·  {profile.get('phone', '')}")
+            st.markdown(f"**Languages:** {', '.join(f'{lang} ({prof})' for lang, prof in profile.get('languages', {}).items())}")
+        with col2:
+            st.markdown("**Target Roles:**")
+            for r in profile.get("target_roles", []):
+                st.markdown(f"- {r}")
 
         st.divider()
-        st.markdown("**Portfolio Projects (Local)**")
-        for proj in profile.get("portfolio_projects", []):
-            icon = "✅" if proj.get("exists") else "❌"
-            st.markdown(f"{icon} **{proj['name']}** — {proj['description']}")
-            if proj.get("exists"):
-                st.markdown(f"  `{proj['path']}`")
 
-        st.divider()
-        st.markdown("**Professional Profiles**")
-        st.markdown("- [LinkedIn](#) _(edit in profile)_")
-        st.markdown("- [GitHub](#) _(edit in profile)_")
+        edu_tab, exp_tab, skills_tab, cvs_tab = st.tabs(
+            ["Education", "Experience", "Skills", "CV Versions"]
+        )
 
-    with cvs_tab:
-        cvs = profile.get("cv_files", {})
-        st.markdown(f"**{len(cvs)}** CV versions:")
-        cols = st.columns(3)
-        for i, (key, path) in enumerate(cvs.items()):
-            with cols[i % 3]:
-                exists = Path(path).exists()
-                icon = "✅" if exists else "❌"
-                st.markdown(f"{icon} **{key}**")
-                st.markdown(f"`{Path(path).name}`")
-                if not exists:
-                    st.markdown(f"<span style='color:#ff4444;font-size:0.8em;'>missing</span>",
-                                unsafe_allow_html=True)
+        with edu_tab:
+            for e in profile.get("education", []):
+                with st.container(border=True):
+                    st.markdown(f"**{e['degree']}**  —  {e['institution']} ({e['year']})")
+                    if e.get("thesis"):
+                        st.markdown(f"_Thesis:_ {e['thesis']}")
 
-        st.divider()
-        st.markdown("**CV Effectiveness**")
-        from optimizer import analyze_effectiveness
-        apps_data = list_applications()
-        effect = analyze_effectiveness(apps_data)
-        cv_stats = effect.get("cv_stats", {})
-        if cv_stats:
-            cv_df = pd.DataFrame([
-                {"CV": cv, "Apps": s["total"], "Interviews": s["interview"], "Accepted": s["accepted"]}
-                for cv, s in sorted(cv_stats.items(), key=lambda x: -x[1]["total"])
-            ])
-            st.dataframe(cv_df, hide_index=True, use_container_width=True)
-        else:
-            st.caption("No application data yet — apply to see which CVs perform best.")
+        with exp_tab:
+            for e in profile.get("experience", []):
+                with st.container(border=True):
+                    st.markdown(f"**{e['role']}** @ {e['institution']}")
+                    st.markdown(f"_{e.get('period', '')}_")
+                    if e.get("topics"):
+                        st.markdown(f"Topics: {', '.join(e['topics'])}")
+                    if e.get("collaborators"):
+                        st.markdown(f"Collaborators: {', '.join(e['collaborators'])}")
+
+        with skills_tab:
+            for cat, skills in profile.get("technical_skills", {}).items():
+                st.markdown(f"**{cat.replace('_', ' ').title()}:** {', '.join(skills)}")
+
+            st.divider()
+            st.markdown("**Portfolio Projects (Local)**")
+            for proj in profile.get("portfolio_projects", []):
+                icon = "✅" if proj.get("exists") else "❌"
+                st.markdown(f"{icon} **{proj['name']}** — {proj['description']}")
+                if proj.get("exists"):
+                    st.markdown(f"  `{proj['path']}`")
+
+            st.divider()
+            st.markdown("**Professional Profiles**")
+            st.markdown("- [LinkedIn](#) _(edit in profile)_")
+            st.markdown("- [GitHub](#) _(edit in profile)_")
+
+        with cvs_tab:
+            cvs = profile.get("cv_files", {})
+            st.markdown(f"**{len(cvs)}** CV versions:")
+            cols = st.columns(3)
+            for i, (key, path) in enumerate(cvs.items()):
+                with cols[i % 3]:
+                    exists = Path(path).exists()
+                    icon = "✅" if exists else "❌"
+                    st.markdown(f"{icon} **{key}**")
+                    st.markdown(f"`{Path(path).name}`")
+                    if not exists:
+                        st.markdown(f"<span style='color:#ff4444;font-size:0.8em;'>missing</span>",
+                                    unsafe_allow_html=True)
+
+            st.divider()
+            st.markdown("**CV Effectiveness**")
+            from optimizer import analyze_effectiveness
+            apps_data = list_applications()
+            effect = analyze_effectiveness(apps_data)
+            cv_stats = effect.get("cv_stats", {})
+            if cv_stats:
+                cv_df = pd.DataFrame([
+                    {"CV": cv, "Apps": s["total"], "Interviews": s["interview"], "Accepted": s["accepted"]}
+                    for cv, s in sorted(cv_stats.items(), key=lambda x: -x[1]["total"])
+                ])
+                st.dataframe(cv_df, hide_index=True, use_container_width=True)
+            else:
+                st.caption("No application data yet — apply to see which CVs perform best.")
+
+    # ── Edit ──
+    with edit_tab:
+        from profile import update_profile
+        st.subheader("Edit Profile")
+
+        with st.form("profile_edit_form"):
+            col1, col2 = st.columns(2)
+            with col1:
+                p_name = st.text_input("Name", value=profile.get("name", ""))
+                p_email = st.text_input("Email", value=profile.get("email", ""))
+                p_phone = st.text_input("Phone", value=profile.get("phone", ""))
+            with col2:
+                p_location = st.text_input("Location", value=profile.get("location", ""))
+                lang_str = st.text_input("Languages (comma-separated)", value=", ".join(f"{k}: {v}" for k, v in profile.get("languages", {}).items()),
+                    help="e.g. English: fluent, Italian: native")
+                p_roles = st.text_area("Target Roles (one per line)", value="\n".join(profile.get("target_roles", [])))
+
+            st.divider()
+            st.markdown("**Education**")
+            edu_data = profile.get("education", [])
+            edu_count = len(edu_data)
+            for i in range(max(edu_count, 1)):
+                col1, col2, col3 = st.columns([2, 2, 1])
+                with col1:
+                    default = edu_data[i]["degree"] if i < edu_count else ""
+                    deg = st.text_input(f"Degree {i+1}", value=default, key=f"edu_deg_{i}")
+                with col2:
+                    default = edu_data[i]["institution"] if i < edu_count else ""
+                    inst = st.text_input(f"Institution {i+1}", value=default, key=f"edu_inst_{i}")
+                with col3:
+                    default = str(edu_data[i]["year"]) if i < edu_count else ""
+                    yr = st.text_input(f"Year", value=default, key=f"edu_yr_{i}")
+
+            st.divider()
+            st.markdown("**Experience**")
+            exp_data = profile.get("experience", [])
+            exp_count = len(exp_data)
+            for i in range(max(exp_count, 1)):
+                col1, col2, col3 = st.columns([2, 2, 1])
+                with col1:
+                    default = exp_data[i]["role"] if i < exp_count else ""
+                    role = st.text_input(f"Role {i+1}", value=default, key=f"exp_role_{i}")
+                with col2:
+                    default = exp_data[i]["institution"] if i < exp_count else ""
+                    org = st.text_input(f"Org {i+1}", value=default, key=f"exp_org_{i}")
+                with col3:
+                    default = exp_data[i].get("period", "") if i < exp_count else ""
+                    per = st.text_input(f"Period", value=default, key=f"exp_per_{i}")
+
+            st.divider()
+            st.markdown("**Skills**")
+            skills_data = profile.get("technical_skills", {})
+            existing_cats = list(skills_data.keys())
+            for cat in existing_cats:
+                skills_str = ", ".join(skills_data[cat])
+                st.text_input(f"{cat.replace('_', ' ').title()}", value=skills_str, key=f"skill_{cat}",
+                    help="Comma-separated")
+
+            st.divider()
+            submitted = st.form_submit_button(" Save Profile", type="primary")
+
+        if submitted:
+            new_langs = {}
+            for part in lang_str.split(","):
+                if ":" in part:
+                    k, v = part.split(":", 1)
+                    new_langs[k.strip()] = v.strip()
+            new_edu = []
+            for i in range(max(edu_count, 1)):
+                deg = st.session_state.get(f"edu_deg_{i}", "")
+                inst = st.session_state.get(f"edu_inst_{i}", "")
+                yr = st.session_state.get(f"edu_yr_{i}", "")
+                if deg:
+                    entry = {"degree": deg, "institution": inst or "", "year": int(yr) if yr.isdigit() else 0}
+                    new_edu.append(entry)
+            new_exp = []
+            for i in range(max(exp_count, 1)):
+                role = st.session_state.get(f"exp_role_{i}", "")
+                org = st.session_state.get(f"exp_org_{i}", "")
+                per = st.session_state.get(f"exp_per_{i}", "")
+                if role:
+                    entry = {"role": role, "institution": org or "", "period": per, "topics": []}
+                    new_exp.append(entry)
+            new_skills = {}
+            for cat in existing_cats + [""]:
+                val = st.session_state.get(f"skill_{cat}", "")
+                if val.strip() and cat:
+                    new_skills[cat] = [s.strip() for s in val.split(",") if s.strip()]
+            if not new_skills and existing_cats:
+                for cat in existing_cats:
+                    val = st.session_state.get(f"skill_{cat}", "")
+                    if val.strip():
+                        new_skills[cat] = [s.strip() for s in val.split(",") if s.strip()]
+
+            update_profile({
+                "name": p_name,
+                "email": p_email,
+                "phone": p_phone,
+                "location": p_location,
+                "languages": new_langs,
+                "target_roles": [r.strip() for r in p_roles.split("\n") if r.strip()],
+                "education": new_edu,
+                "experience": new_exp,
+                "technical_skills": new_skills,
+            })
+            st.success("Profile saved!")
+            st.rerun()
+
+    # ── Upload CV ──
+    with upload_tab:
+        st.subheader("Upload your CV (PDF)")
+        uploaded = st.file_uploader("Choose a PDF file", type="pdf")
+
+        if uploaded is not None:
+            from cv_parser import extract_text_from_pdf, extract_skills_from_text, extract_sections, normalize_cv_key
+            import tempfile
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                tmp.write(uploaded.getvalue())
+                tmp_path = tmp.name
+
+            with st.spinner("Parsing your CV..."):
+                text = extract_text_from_pdf(tmp_path)
+
+            if not text:
+                st.error("Could not extract text from this PDF. Make sure it's a text-based PDF (not scanned images).")
+            else:
+                key = normalize_cv_key(uploaded.name)
+                save_path = DATA_DIR / "cv_texts" / uploaded.name
+                save_path.parent.mkdir(exist_ok=True)
+                with open(save_path, "wb") as f:
+                    f.write(uploaded.getvalue())
+
+                text_path = DATA_DIR / "cv_texts" / f"{key}.txt"
+                text_path.write_text(text, encoding="utf-8")
+
+                skills = extract_skills_from_text(text)
+                sections = extract_sections(text)
+
+                st.success(f"Parsed {len(text)} characters from {uploaded.name}")
+                st.markdown(f"**Sections found:** {', '.join(sections.keys())}")
+
+                with st.expander(" Extracted Text Preview", expanded=False):
+                    st.text(text[:2000])
+
+                with st.expander(" Extracted Skills", expanded=True):
+                    for cat, items in skills.items():
+                        if items:
+                            st.markdown(f"**{cat.replace('_', ' ').title()}:** {', '.join(items)}")
+
+                # Update CV inventory
+                cv_inv_path = DATA_DIR / "cv_inventory.json"
+                inv = []
+                if cv_inv_path.exists():
+                    inv = json.loads(cv_inv_path.read_text())
+                inv.append({
+                    "cv_key": key,
+                    "filename": uploaded.name,
+                    "path": str(save_path),
+                    "text_path": str(text_path),
+                    "text_length": len(text),
+                    "skills": skills,
+                    "sections_found": list(sections.keys()),
+                })
+                cv_inv_path.write_text(json.dumps(inv, indent=2, default=str))
+
+                # Update profile cv_files
+                from profile import update_profile
+                p = load_profile()
+                p["cv_files"] = p.get("cv_files", {})
+                p["cv_files"][key] = str(save_path)
+                update_profile({"cv_files": p["cv_files"]})
+
+                st.success(f"CV saved as '{key}' and added to your profile!")
+
+                # Auto-fill profile button
+                has_edu = "education" in sections
+                has_exp = "experience" in sections or "employment" in sections
+                if has_edu or has_exp:
+                    if st.button(" Auto-fill Profile from CV", type="primary"):
+                        updates = {}
+                        name_guess = uploaded.name.replace(".pdf", "").replace("_", " ").replace("-", " ").strip()
+                        if name_guess and name_guess != key:
+                            updates["name"] = name_guess
+
+                        new_skills = profile.get("technical_skills", {})
+                        for cat, items in skills.items():
+                            if cat in new_skills:
+                                existing = set(new_skills[cat])
+                                existing.update(items)
+                                new_skills[cat] = sorted(existing)
+                            else:
+                                new_skills[cat] = items
+                        updates["technical_skills"] = new_skills
+                        update_profile(updates)
+                        st.success("Profile updated from CV! Check the Edit tab to fine-tune.")
+                        st.rerun()
+                else:
+                    st.info("Go to the **Edit** tab to manually customize your profile.")
+
+            os.unlink(tmp_path)
 
 
 def page_role_suggester():
