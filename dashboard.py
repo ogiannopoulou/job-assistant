@@ -6,6 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+import json
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -23,6 +24,7 @@ from optimizer import generate_digest, suggest_next_action, suggest_skill_gaps, 
     generate_career_plan, suggest_courses
 from preferences import show as show_prefs, set_pref as set_preference, list_keys as list_prefs
 from profile import get_search_config, save_search_config, DEFAULT_SEARCH_CONFIG
+from custom_source import list_sources, add_source, update_source, delete_source, scan_custom_source, DEFAULT_TEMPLATE
 from job_ranker import rank_jobs, format_ranked, load_inventory as load_skill_inv
 from github_integrator import load_results as load_github_repos
 from cv_writer import rewrite_cv, auto_rewrite_cv, get_base_cv_for_job, list_available_cvs
@@ -1185,6 +1187,190 @@ def page_search_settings():
     """)
 
 
+def page_custom_sources():
+    st.title(" Custom Sources")
+    st.markdown("Add your own job boards to search alongside the built-in sources.")
+
+    sources = list_sources()
+
+    # ── Add new ──
+    with st.expander("➕ Add a Custom Source", expanded=not bool(sources)):
+        with st.form("add_custom_source"):
+            col1, col2 = st.columns(2)
+            with col1:
+                new_name = st.text_input("Source Name *", placeholder="e.g. My Job Board")
+                new_url = st.text_input("URL Template *", placeholder="https://example.com/jobs?q={keywords}")
+                new_type = st.selectbox("Response Type", ["html", "json"])
+            with col2:
+                new_card = st.text_input("Card Selector", placeholder=".job-card, .listing")
+                new_title = st.text_input("Title Selector *", placeholder="h2 a, .title")
+                new_company = st.text_input("Company Selector", placeholder=".company, .org")
+
+            col3, col4 = st.columns(2)
+            with col3:
+                new_location = st.text_input("Location Selector", placeholder=".location")
+                new_link = st.text_input("Link Selector", placeholder="h2 a")
+                new_link_attr = st.text_input("Link Attribute", value="href")
+            with col4:
+                new_desc = st.text_input("Description Selector", placeholder=".description")
+                new_date = st.text_input("Date Selector (optional)", placeholder=".date, time")
+                new_headers = st.text_area("Custom Headers (JSON)", placeholder='{"Referer": "https://..."}', height=68)
+
+            st.markdown("**For JSON APIs:**")
+            col5, col6 = st.columns(2)
+            with col5:
+                new_json_path = st.text_input("JSON Results Path", value="$.jobs", placeholder="$.jobs, results")
+                new_json_title = st.text_input("JSON Title Key", value="title")
+                new_json_company = st.text_input("JSON Company Key", value="company")
+            with col6:
+                new_json_location = st.text_input("JSON Location Key", value="location")
+                new_json_link = st.text_input("JSON Link Key", value="url")
+                new_json_desc = st.text_input("JSON Description Key", value="description")
+
+            added = st.form_submit_button(" Add Source", type="primary")
+
+        if added:
+            if not new_name or not new_url or not new_title:
+                st.error("Name, URL Template, and Title Selector are required.")
+            else:
+                headers_dict = {}
+                if new_headers.strip():
+                    try:
+                        headers_dict = json.loads(new_headers.strip())
+                    except json.JSONDecodeError:
+                        st.warning("Invalid headers JSON — using defaults.")
+                try:
+                    sid = add_source({
+                        "name": new_name,
+                        "url_template": new_url,
+                        "type": new_type,
+                        "card_selector": new_card,
+                        "title_selector": new_title,
+                        "company_selector": new_company,
+                        "location_selector": new_location,
+                        "link_selector": new_link,
+                        "link_attr": new_link_attr,
+                        "description_selector": new_desc,
+                        "date_selector": new_date,
+                        "headers": headers_dict,
+                        "json_results_path": new_json_path,
+                        "json_title_key": new_json_title,
+                        "json_company_key": new_json_company,
+                        "json_location_key": new_json_location,
+                        "json_link_key": new_json_link,
+                        "json_description_key": new_json_desc,
+                        "enabled": True,
+                    })
+                    st.success(f"Added '{new_name}' (id: {sid})!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Failed to add: {e}")
+
+    st.divider()
+
+    # ── List existing ──
+    if not sources:
+        st.info("No custom sources yet. Use the form above to add one.")
+    else:
+        for s in sources:
+            sid = s.get("id", "")
+            name = s.get("name", "Unnamed")
+            enabled = s.get("enabled", True)
+            url_tmpl = s.get("url_template", "")
+
+            with st.container(border=True):
+                col1, col2, col3, col4, col5 = st.columns([3, 1, 1, 1, 1])
+                with col1:
+                    status = "🟢" if enabled else "⚪"
+                    st.markdown(f"**{status} {name}**")
+                    st.caption(url_tmpl[:80])
+                with col2:
+                    if st.button(f" Test", key=f"test_{sid}", use_container_width=True):
+                        from job_scanner import _load_search_keywords
+                        kws = _load_search_keywords()
+                        with st.spinner(f"Scanning {name}..."):
+                            jobs = scan_custom_source(s, kws, limit=5)
+                        if jobs:
+                            st.success(f"Found {len(jobs)} jobs!")
+                            preview = pd.DataFrame(jobs)[["title", "organization", "location"]]
+                            st.dataframe(preview, use_container_width=True)
+                        else:
+                            st.warning("No jobs found. Check your selectors.")
+                with col3:
+                    if st.button(f" Toggle", key=f"toggle_{sid}", use_container_width=True):
+                        update_source(sid, {"enabled": not enabled})
+                        st.rerun()
+                with col4:
+                    if st.button(f" Edit", key=f"edit_{sid}", use_container_width=True):
+                        st.session_state.edit_source = sid
+                        st.rerun()
+                with col5:
+                    if st.button(f" Delete", key=f"del_{sid}", use_container_width=True):
+                        delete_source(sid)
+                        st.rerun()
+
+            # ── Edit form ──
+            if st.session_state.get("edit_source") == sid:
+                with st.expander(f"✏️ Editing: {name}", expanded=True):
+                    with st.form(f"edit_form_{sid}"):
+                        e_name = st.text_input("Source Name", value=s.get("name", ""))
+                        e_url = st.text_input("URL Template", value=s.get("url_template", ""))
+                        e_type = st.selectbox("Response Type", ["html", "json"], index=0 if s.get("type") == "html" else 1)
+                        e_card = st.text_input("Card Selector", value=s.get("card_selector", ""))
+                        e_title = st.text_input("Title Selector", value=s.get("title_selector", ""))
+                        e_company = st.text_input("Company Selector", value=s.get("company_selector", ""))
+                        e_location = st.text_input("Location Selector", value=s.get("location_selector", ""))
+                        e_link = st.text_input("Link Selector", value=s.get("link_selector", ""))
+                        e_link_attr = st.text_input("Link Attribute", value=s.get("link_attr", "href"))
+                        e_desc = st.text_input("Description Selector", value=s.get("description_selector", ""))
+                        e_date = st.text_input("Date Selector", value=s.get("date_selector", ""))
+                        e_headers = st.text_area("Custom Headers (JSON)", value=json.dumps(s.get("headers", {}), indent=2) if s.get("headers") else "")
+                        st.markdown("**JSON API Fields**")
+                        e_jpath = st.text_input("JSON Results Path", value=s.get("json_results_path", "$.jobs"))
+                        e_jtitle = st.text_input("JSON Title Key", value=s.get("json_title_key", "title"))
+                        e_jcompany = st.text_input("JSON Company Key", value=s.get("json_company_key", "company"))
+                        e_jloc = st.text_input("JSON Location Key", value=s.get("json_location_key", "location"))
+                        e_jlink = st.text_input("JSON Link Key", value=s.get("json_link_key", "url"))
+                        e_jdesc = st.text_input("JSON Description Key", value=s.get("json_description_key", "description"))
+
+                        col_save, col_cancel = st.columns(2)
+                        saved = col_save.form_submit_button(" Save Changes", type="primary")
+                        cancelled = col_cancel.form_submit_button(" Cancel")
+
+                    if saved:
+                        hdrs = {}
+                        if e_headers.strip():
+                            try:
+                                hdrs = json.loads(e_headers.strip())
+                            except json.JSONDecodeError:
+                                pass
+                        update_source(sid, {
+                            "name": e_name, "url_template": e_url, "type": e_type,
+                            "card_selector": e_card, "title_selector": e_title,
+                            "company_selector": e_company, "location_selector": e_location,
+                            "link_selector": e_link, "link_attr": e_link_attr,
+                            "description_selector": e_desc, "date_selector": e_date,
+                            "headers": hdrs,
+                            "json_results_path": e_jpath, "json_title_key": e_jtitle,
+                            "json_company_key": e_jcompany, "json_location_key": e_jloc,
+                            "json_link_key": e_jlink, "json_description_key": e_jdesc,
+                        })
+                        st.session_state.edit_source = None
+                        st.rerun()
+                    if cancelled:
+                        st.session_state.edit_source = None
+                        st.rerun()
+
+    st.divider()
+    st.markdown("""
+    **Tips for adding custom sources:**
+    - Use `{keywords}` in the URL — it's replaced with your search terms
+    - CSS selectors work like `.class` or `#id` or `div.class`
+    - For JSON APIs, set the path to the results array (e.g. `$.data.jobs` or `results`)
+    - Check the site's robots.txt before scraping
+    """)
+
+
 def page_career_plan():
     st.title(" Career Plan")
 
@@ -1248,7 +1434,7 @@ def main():
     page = st.sidebar.radio(
         "Navigate",
         [" Dashboard", " Job Board", " Skills Analysis", " Tracker",
-         " Profile", " Preferences", " Search Settings",
+         " Profile", " Preferences", " Search Settings", " Custom Sources",
          " Career Plan", " Courses",
          " Session Context", " Role Suggester", " Cover Letter", " CV Writer", " Optimizer"],
         index=0,
@@ -1273,6 +1459,7 @@ def main():
         " Profile": page_profile,
         " Preferences": page_preferences,
         " Search Settings": page_search_settings,
+        " Custom Sources": page_custom_sources,
         " Career Plan": page_career_plan,
         " Courses": page_courses,
         " Session Context": page_session_context,

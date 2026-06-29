@@ -481,6 +481,26 @@ def scan_all(sources=None):
                         all_jobs.append(j)
             except Exception:
                 pass
+
+    # Custom sources
+    try:
+        from custom_source import list_sources, scan_custom_source
+        for cs in list_sources():
+            if cs.get("enabled", True):
+                try:
+                    jobs = scan_custom_source(cs, keywords)
+                    for j in jobs:
+                        link = j.get("link", "")
+                        if link and link not in seen_links:
+                            seen_links.add(link)
+                            if remote_only and j.get("remote", "no") not in ("yes", "maybe"):
+                                continue
+                            all_jobs.append(j)
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
     return all_jobs
 
 
