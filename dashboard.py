@@ -825,32 +825,98 @@ def page_profile():
                 p["cv_files"][key] = str(save_path)
                 update_profile({"cv_files": p["cv_files"]})
 
-                st.success(f"CV saved as '{key}' and added to your profile!")
+                st.success(f"CV saved as '{key}'! Profile auto-filled below.")
 
-                # Auto-fill profile button
-                has_edu = "education" in sections
-                has_exp = "experience" in sections or "employment" in sections
-                if has_edu or has_exp:
-                    if st.button(" Auto-fill Profile from CV", type="primary"):
-                        updates = {}
-                        name_guess = uploaded.name.replace(".pdf", "").replace("_", " ").replace("-", " ").strip()
-                        if name_guess and name_guess != key:
-                            updates["name"] = name_guess
+                # ── Auto-fill profile from CV ──
+                from profile import update_profile
+                updates = {}
 
-                        new_skills = profile.get("technical_skills", {})
-                        for cat, items in skills.items():
-                            if cat in new_skills:
-                                existing = set(new_skills[cat])
-                                existing.update(items)
-                                new_skills[cat] = sorted(existing)
-                            else:
-                                new_skills[cat] = items
-                        updates["technical_skills"] = new_skills
-                        update_profile(updates)
-                        st.success("Profile updated from CV! Check the Edit tab to fine-tune.")
-                        st.rerun()
+                # Extract name (try header first, then filename)
+                header_text = sections.get("header", "")[:200]
+                name_from_header = header_text.strip().split("\n")[0].strip() if header_text else ""
+                if name_from_header and len(name_from_header) > 3 and len(name_from_header) < 80:
+                    updates["name"] = name_from_header
                 else:
-                    st.info("Go to the **Edit** tab to manually customize your profile.")
+                    clean = uploaded.name.replace(".pdf", "").replace("_", " ").replace("-", " ").strip()
+                    if clean and clean != key:
+                        updates["name"] = clean
+
+                # Extract languages from skills
+                detected_langs = skills.get("languages", [])
+                lang_map = {}
+                for l in detected_langs:
+                    if "(" in l:
+                        name_lang, prof = l.split("(", 1)
+                        lang_map[name_lang.strip()] = prof.rstrip(")").strip()
+                    else:
+                        lang_map[l] = "fluent"
+                if lang_map:
+                    updates["languages"] = lang_map
+
+                # Parse education section
+                edu_lines = sections.get("education", "").strip().split("\n")
+                parsed_edu = []
+                for line in edu_lines:
+                    line = line.strip()
+                    if not line or len(line) < 5:
+                        continue
+                    import re as re_mod
+                    year_match = re_mod.findall(r"\b(19\d\d|20\d\d)\b", line)
+                    year = int(year_match[0]) if year_match else 0
+                    degree = line[:100]
+                    inst = ""
+                    for kw in ["University", "Institute", "College", "School", "Politecnico", "Sapienza",
+                               "Universit", "Istituto", "Scuola"]:
+                        if kw.lower() in line.lower():
+                            parts = line.lower().split(kw.lower(), 1)
+                            before = parts[0].strip().rstrip(",").rstrip("—").rstrip("-").strip()
+                            if before:
+                                degree = before
+                            after = kw + parts[1] if len(parts) > 1 else kw
+                            inst = after[:150]
+                            break
+                    parsed_edu.append({"degree": degree[:200], "institution": inst[:200], "year": year})
+                if parsed_edu:
+                    updates["education"] = parsed_edu
+
+                # Parse experience section
+                exp_raw = sections.get("experience", "") or sections.get("employment", "") or sections.get("work experience", "") or sections.get("professional experience", "")
+                exp_lines = [l.strip() for l in exp_raw.strip().split("\n") if l.strip()] if exp_raw else []
+                parsed_exp = []
+                current_role = None
+                current_topics = []
+                for line in exp_lines:
+                    import re as re_mod2
+                    if re_mod2.match(r"^[A-Z][A-Za-z\s]+$", line) and len(line) < 60 and not line.startswith("•") and not line.startswith("-"):
+                        if current_role:
+                            parsed_exp.append({"role": current_role, "institution": "", "period": "", "topics": current_topics})
+                        current_role = line
+                        current_topics = []
+                    elif line and (line.startswith("•") or line.startswith("-") or line.startswith("*")):
+                        current_topics.append(line.lstrip("•-* ").strip())
+                    elif current_role and line and not line.startswith("•"):
+                        if not parsed_exp or parsed_exp[-1].get("role") != current_role:
+                            pass
+                if current_role:
+                    parsed_exp.append({"role": current_role, "institution": "", "period": "", "topics": current_topics})
+                if parsed_exp:
+                    updates["experience"] = parsed_exp
+
+                # Merge skills
+                tech_skills = profile.get("technical_skills", {})
+                for cat, items in skills.items():
+                    cat_key = cat.replace(" ", "_")
+                    if cat_key in tech_skills:
+                        existing = set(tech_skills[cat_key])
+                        existing.update(items)
+                        tech_skills[cat_key] = sorted(existing)
+                    else:
+                        tech_skills[cat_key] = items
+                updates["technical_skills"] = tech_skills
+
+                update_profile(updates)
+                st.success("✅ Profile auto-filled from CV! Go to the **Edit** tab to fine-tune.")
+                st.rerun()
 
             os.unlink(tmp_path)
 
