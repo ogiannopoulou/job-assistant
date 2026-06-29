@@ -93,6 +93,12 @@
     "prefer_flexible_hours": true,
     "max_commute_minutes": 0
   },
+  "search_config": {
+    "keywords": ["software engineer", "full-stack developer", "data scientist", "python developer"],
+    "location": "Remote",
+    "enabled_sources": ["linkedin", "indeed", "remoteok", "himalayas", "remotive"],
+    "remote_only": true
+  },
   "portfolio_projects": [],
   "cv_files": {
     "Demo_User_CV_English": "data/cv_texts/Demo_User_CV_English.pdf"

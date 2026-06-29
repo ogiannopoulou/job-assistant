@@ -260,5 +260,25 @@ def set_preference(key: str, value) -> bool:
     return True
 
 
+DEFAULT_SEARCH_CONFIG = {
+    "keywords": ["software engineer", "developer", "data scientist"],
+    "location": "Remote",
+    "enabled_sources": ["linkedin", "indeed", "remoteok", "himalayas", "remotive"],
+    "remote_only": False,
+}
+
+
+def get_search_config() -> dict:
+    p = load_profile()
+    return p.get("search_config", dict(DEFAULT_SEARCH_CONFIG))
+
+
+def save_search_config(config: dict) -> bool:
+    p = load_profile()
+    p["search_config"] = config
+    save_profile(p)
+    return True
+
+
 if __name__ == "__main__":
     print(summarize())

@@ -22,6 +22,7 @@ from skills_analyzer import analyze_job_fit, ALL_SKILLS
 from optimizer import generate_digest, suggest_next_action, suggest_skill_gaps, \
     generate_career_plan, suggest_courses
 from preferences import show as show_prefs, set_pref as set_preference, list_keys as list_prefs
+from profile import get_search_config, save_search_config, DEFAULT_SEARCH_CONFIG
 from job_ranker import rank_jobs, format_ranked, load_inventory as load_skill_inv
 from github_integrator import load_results as load_github_repos
 from cv_writer import rewrite_cv, auto_rewrite_cv, get_base_cv_for_job, list_available_cvs
@@ -1117,6 +1118,73 @@ def page_preferences():
     st.markdown("**Tip:** Run `plan` in the Career Plan tab to see how your preferences shape your recommended path.")
 
 
+def page_search_settings():
+    st.title(" Search Settings")
+    st.markdown("Configure which jobs to search for and where.")
+
+    cfg = get_search_config()
+
+    with st.form("search_settings_form"):
+        keywords_str = st.text_area(
+            "Search Keywords (one per line)",
+            value="\n".join(cfg.get("keywords", DEFAULT_SEARCH_CONFIG["keywords"])),
+            height=150,
+            help="These keywords are used across all job boards."
+        )
+        location = st.text_input(
+            "Location",
+            value=cfg.get("location", DEFAULT_SEARCH_CONFIG["location"]),
+            help="e.g. Remote, Italy, Europe, London"
+        )
+        col1, col2 = st.columns(2)
+        with col1:
+            remote_only = st.checkbox(
+                "Remote only",
+                value=cfg.get("remote_only", DEFAULT_SEARCH_CONFIG["remote_only"]),
+                help="Only show jobs marked as remote"
+            )
+        with col2:
+            st.markdown("<br>", unsafe_allow_html=True)
+
+        st.subheader("Enabled Sources")
+        st.markdown("Uncheck sources you don't want to search.")
+
+        all_sources = [
+            ("linkedin", "LinkedIn"),
+            ("indeed", "Indeed"),
+            ("remoteok", "RemoteOK"),
+            ("himalayas", "Himalayas"),
+            ("remotive", "Remotive"),
+            ("inpa", "INPA (Italian PA)"),
+        ]
+        enabled = cfg.get("enabled_sources", DEFAULT_SEARCH_CONFIG["enabled_sources"])
+        source_checks = {}
+        src_cols = st.columns(3)
+        for i, (key, label) in enumerate(all_sources):
+            with src_cols[i % 3]:
+                source_checks[key] = st.checkbox(label, value=key in enabled)
+
+        submitted = st.form_submit_button(" Save Settings", type="primary")
+
+    if submitted:
+        new_keywords = [k.strip() for k in keywords_str.split("\n") if k.strip()]
+        new_enabled = [k for k, v in source_checks.items() if v]
+        save_search_config({
+            "keywords": new_keywords,
+            "location": location.strip(),
+            "enabled_sources": new_enabled,
+            "remote_only": remote_only,
+        })
+        st.success("Search settings saved! Run a new scan on the Job Board page.")
+        st.rerun()
+
+    st.divider()
+    st.markdown("""
+    **Tip:** After changing settings, go to **Job Board** and click **"Scan All Sources"** 
+    to fetch fresh results with your new criteria.
+    """)
+
+
 def page_career_plan():
     st.title(" Career Plan")
 
@@ -1180,7 +1248,8 @@ def main():
     page = st.sidebar.radio(
         "Navigate",
         [" Dashboard", " Job Board", " Skills Analysis", " Tracker",
-         " Profile", " Preferences", " Career Plan", " Courses",
+         " Profile", " Preferences", " Search Settings",
+         " Career Plan", " Courses",
          " Session Context", " Role Suggester", " Cover Letter", " CV Writer", " Optimizer"],
         index=0,
         label_visibility="collapsed",
@@ -1203,6 +1272,7 @@ def main():
         " Tracker": page_tracker,
         " Profile": page_profile,
         " Preferences": page_preferences,
+        " Search Settings": page_search_settings,
         " Career Plan": page_career_plan,
         " Courses": page_courses,
         " Session Context": page_session_context,

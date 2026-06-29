@@ -63,32 +63,64 @@ def parse_salary(text: str) -> dict:
     return {}
 
 
+# ── Config ───────────────────────────────────────────
+def _load_search_keywords():
+    try:
+        from profile import get_search_config
+        cfg = get_search_config()
+        return cfg.get("keywords", ["software engineer"])
+    except Exception:
+        return ["software engineer"]
+
+
+def _load_search_location():
+    try:
+        from profile import get_search_config
+        cfg = get_search_config()
+        return cfg.get("location", "Remote")
+    except Exception:
+        return "Remote"
+
+
+def _load_enabled_sources():
+    try:
+        from profile import get_search_config
+        cfg = get_search_config()
+        return cfg.get("enabled_sources", ["linkedin", "indeed", "remoteok", "himalayas", "remotive"])
+    except Exception:
+        return ["linkedin", "indeed", "remoteok", "himalayas", "remotive"]
+
+
+def _load_remote_only():
+    try:
+        from profile import get_search_config
+        cfg = get_search_config()
+        return cfg.get("remote_only", False)
+    except Exception:
+        return False
+
+
 # ── LinkedIn ─────────────────────────────────────────
 def scan_linkedin(keywords=None, limit=100):
-    """LinkedIn — legal/admin/sales keywords targeting Italy + remote EU."""
+    """LinkedIn job search."""
     if keywords is None:
-        keywords = [
-            "funzionario+amministrativo", "impiegato+amministrativo",
-            "amministrativo", "segreteria", "back+office",
-            "legal+officer", "consulente+legale", "paralegal",
-            "cancelliere", "giuridico",
-            "sales+manager", "account+manager", "commerciale",
-            "vendite", "sales+representative",
-            "customer+service", "servizio+clienti",
-            "responsabile+amministrativo",
-            "HR+coordinator", "risorse+umane",
-            "compliance+officer", "privacy+officer",
-            "concorso+pubblico", "pubblica+amministrazione",
-            "export+manager", "logistics+coordinator",
-            "office+manager", "operations+manager",
-            "customer+success", "key+account",
-            "amministrazione+personale",
-        ]
+        keywords = _load_search_keywords()
     results = []
     seen_jids = set()
-    geo_id = "103350119"
-    base_url = "https://it.linkedin.com/jobs/search/"
-    it_headers = {**HEADERS, "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7"}
+    location = _load_search_location()
+    remote_only = _load_remote_only()
+    if "italy" in location.lower() or "italia" in location.lower():
+        geo_id = "103350119"
+        base_url = "https://it.linkedin.com/jobs/search/"
+        lang_headers = {**HEADERS, "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7"}
+    elif "europe" in location.lower():
+        geo_id = "91000000"
+        base_url = "https://www.linkedin.com/jobs/search/"
+        lang_headers = {**HEADERS, "Accept-Language": "en-US,en;q=0.9"}
+    else:
+        geo_id = "103644278"
+        base_url = "https://www.linkedin.com/jobs/search/"
+        lang_headers = {**HEADERS, "Accept-Language": "en-US,en;q=0.9"}
 
     for kw in keywords:
         if len(results) >= limit:
@@ -99,7 +131,7 @@ def scan_linkedin(keywords=None, limit=100):
             try:
                 start = page * 25
                 url = f"{base_url}?keywords={kw}&geoId={geo_id}&start={start}"
-                resp = SESSION.get(url, timeout=15, headers=it_headers)
+                resp = SESSION.get(url, timeout=15, headers=lang_headers)
                 if resp.status_code != 200:
                     break
                 soup = BeautifulSoup(resp.text, "html.parser")
@@ -151,26 +183,18 @@ def scan_linkedin(keywords=None, limit=100):
 
 
 # ── Indeed ───────────────────────────────────────────
-def scan_indeed(keywords=None, location="Italy"):
-    """Indeed — legal/admin/sales keywords in Italy."""
+def scan_indeed(keywords=None, location=None):
+    """Indeed job search."""
     if keywords is None:
-        keywords = [
-            "funzionario amministrativo", "impiegato amministrativo",
-            "amministrativo", "segreteria", "back office",
-            "consulente legale", "addetto legale",
-            "sales manager", "account manager", "commerciale",
-            "vendite", "customer service",
-            "responsabile amministrativo",
-            "HR", "risorse umane",
-            "compliance", "privacy",
-            "office manager", "operations",
-            "export manager",
-        ]
+        keywords = _load_search_keywords()
+    if location is None:
+        location = _load_search_location()
     results = []
     for kw in keywords:
         try:
+            indeed_domain = "it.indeed.com" if "italy" in location.lower() or "italia" in location.lower() else "www.indeed.com"
             params = {"q": kw, "l": location, "sort": "date"}
-            url = f"https://it.indeed.com/jobs?{urlencode(params)}"
+            url = f"https://{indeed_domain}/jobs?{urlencode(params)}"
             resp = SESSION.get(url, timeout=15)
             soup = BeautifulSoup(resp.text, "html.parser")
             for card in soup.select("[class*='job'], .result")[:15]:
@@ -179,7 +203,7 @@ def scan_indeed(keywords=None, location="Italy"):
                     continue
                 title = title_el.get_text(strip=True)
                 href = title_el.get("href", "")
-                link = f"https://it.indeed.com{href}" if href.startswith("/") else href
+                link = f"https://{indeed_domain}{href}" if href.startswith("/") else href
                 company_el = card.select_one("[class*='company'], [class*='org']")
                 company = company_el.get_text(strip=True) if company_el else "Unknown"
                 is_remote = "remote" in (title + company).lower() or "da remoto" in (title + company).lower()
@@ -203,12 +227,9 @@ def scan_indeed(keywords=None, location="Italy"):
 
 # ── RemoteOK ─────────────────────────────────────────
 def scan_remoteok(keywords=None, limit=30):
-    """RemoteOK — business/admin/sales keywords for remote EU roles."""
+    """RemoteOK job search."""
     if keywords is None:
-        keywords = ["sales", "account+manager", "customer+service",
-                    "customer+success", "administrative", "legal",
-                    "compliance", "hr", "operations", "office+manager",
-                    "export", "business+development"]
+        keywords = _load_search_keywords()
     results = []
     seen = set()
     for kw in keywords:
@@ -246,13 +267,11 @@ def scan_remoteok(keywords=None, limit=30):
     return results
 
 
-# ── Himalayas (EU remote jobs) ──────────────────────
+# ── Himalayas ───────────────────────────────────────
 def scan_himalayas(queries=None, limit=30):
-    """Himalayas — remote job board with strong EU employer presence."""
+    """Himalayas remote job board."""
     if queries is None:
-        queries = ["sales", "customer+support", "administrative", "legal",
-                   "hr", "operations", "compliance", "account+manager",
-                   "office+manager", "business+development"]
+        queries = _load_search_keywords()
     results = []
     seen = set()
     for q in queries:
@@ -298,12 +317,9 @@ def scan_himalayas(queries=None, limit=30):
 
 # ── INPA (Italian public administration concorsi) ──
 def scan_inpa(keywords=None, limit=50):
-    """INPA — Portale Unico del Reclutamento (PA concorsi pubblici)."""
+    """INPA — Portale Unico del Reclutamento."""
     if keywords is None:
-        keywords = ["amministrativo", "funzionario", "istruttore",
-                     "amministrazione", "segreteria", "cancelliere",
-                     "impiegato", "collaboratore", "contabile",
-                     "giuridico", "legale", "compliance"]
+        keywords = _load_search_keywords()
     results = []
     seen_ids = set()
     url = "https://portale.inpa.gov.it/concorsi-smart/api/concorso-public-area/search-better"
@@ -435,17 +451,21 @@ def scan_remotive(limit=30):
 # ── Aggregator ──────────────────────────────────────
 def scan_all(sources=None):
     if sources is None:
-        sources = ["linkedin", "indeed", "remoteok", "himalayas", "remotive", "inpa"]
+        sources = _load_enabled_sources()
     all_jobs = []
     seen_links = set()
 
+    keywords = _load_search_keywords()
+    location = _load_search_location()
+    remote_only = _load_remote_only()
+
     scanners = {
-        "linkedin": lambda: scan_linkedin(),
-        "indeed": lambda: scan_indeed(),
-        "remoteok": lambda: scan_remoteok(),
+        "linkedin": lambda: scan_linkedin(keywords),
+        "indeed": lambda: scan_indeed(keywords, location),
+        "remoteok": lambda: scan_remoteok(keywords),
         "remotive": lambda: scan_remotive(),
-        "himalayas": lambda: scan_himalayas(),
-        "inpa": lambda: scan_inpa(),
+        "himalayas": lambda: scan_himalayas(keywords),
+        "inpa": lambda: scan_inpa(keywords),
     }
 
     for src in sources:
@@ -456,6 +476,8 @@ def scan_all(sources=None):
                     link = j.get("link", "")
                     if link and link not in seen_links:
                         seen_links.add(link)
+                        if remote_only and j.get("remote", "no") not in ("yes", "maybe"):
+                            continue
                         all_jobs.append(j)
             except Exception:
                 pass
@@ -464,26 +486,9 @@ def scan_all(sources=None):
 
 def get_search_terms():
     try:
-        from profile import load_profile
-        p = load_profile()
-        skills = p["technical_skills"]
-        keywords = set()
-        for cat in ["legal_administrative", "sales_customer_service", "it_tools", "soft_skills"]:
-            for s in skills.get(cat, []):
-                keywords.add(s.lower())
-        extra = [
-            "funzionario amministrativo", "impiegato amministrativo",
-            "sales manager", "account manager", "commerciale",
-            "customer service", "consulente legale", "legal officer",
-            "back office", "segreteria", "amministrazione",
-            "compliance", "risorse umane", "HR",
-            "office manager", "operations", "export manager",
-            "vendite", "concorso pubblico", "pubblica amministrazione",
-        ]
-        keywords.update(extra)
-        return sorted(keywords)
+        return _load_search_keywords()
     except Exception:
-        return ["amministrativo", "sales", "customer service", "legal"]
+        return ["software engineer", "developer"]
 
 
 def _normalize(jobs):
