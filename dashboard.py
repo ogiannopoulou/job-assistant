@@ -1198,7 +1198,7 @@ def page_cover_letter():
 def _generate_cv(base_cv, title, org, desc, fmt_choice):
     formats = ["latex", "docx"] if fmt_choice == "both" else [fmt_choice]
     st.info(f"Rewriting **{base_cv}** CV for **{title}** @ {org}...")
-    with st.spinner("Generating CV (LaTeX compilation + DOCX conversion)..."):
+    with st.spinner("Generating CV..."):
         try:
             result = rewrite_cv(
                 base_cv_key=base_cv,
@@ -1211,10 +1211,13 @@ def _generate_cv(base_cv, title, org, desc, fmt_choice):
             for fmt in formats:
                 r = result.get("format_results", {}).get(fmt, {})
                 if "error" in r:
-                    st.error(f"{fmt}: {r['error']}")
+                    st.warning(f"{fmt}: {r['error']}")
                 else:
                     for ext, path in r.items():
-                        st.markdown(f"- [{fmt}.{ext}]({path})")
+                        if path is None:
+                            st.info(f"{fmt.upper()} PDF not available — LibreOffice not installed on this server. The DOCX file is ready to download.")
+                        else:
+                            st.markdown(f"- [{fmt}.{ext}]({path})")
         except Exception as e:
             st.error(f"CV generation failed: {e}")
 

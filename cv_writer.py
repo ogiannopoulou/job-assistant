@@ -647,6 +647,7 @@ def render_docx(sections: dict, output_path: str) -> str:
     doc.save(docx_path)
 
     pdf_path = output_path + ".pdf"
+    pdf_ok = False
     try:
         subprocess.run(
             ["libreoffice", "--headless", "--convert-to", "pdf",
@@ -654,15 +655,12 @@ def render_docx(sections: dict, output_path: str) -> str:
             capture_output=True, text=True, timeout=60,
             env={**os.environ, "HOME": os.path.expanduser("~")}
         )
-    except subprocess.TimeoutExpired:
-        raise RuntimeError("LibreOffice conversion timed out")
-    except FileNotFoundError:
-        raise RuntimeError("libreoffice not found. Install it for DOCX→PDF conversion.")
+        if os.path.exists(pdf_path):
+            pdf_ok = True
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
 
-    if not os.path.exists(pdf_path):
-        raise RuntimeError(f"LibreOffice failed to produce PDF from {docx_path}")
-
-    return docx_path, pdf_path
+    return docx_path, pdf_path if pdf_ok else None
 
 
 def rewrite_cv(
