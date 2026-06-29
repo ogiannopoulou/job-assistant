@@ -3,7 +3,7 @@
     "cv_key": "Demo_User_CV_English",
     "filename": "Demo_User_CV_English.pdf",
     "path": "data/cv_texts/Demo_User_CV_English.pdf",
-    "text_path": "data/cv_texts/Demo_User.txt",
+    "text_path": "data/cv_texts/Demo_User_CV_English.txt",
     "text_length": 3182,
     "skills": {
       "legal_administrative": [
