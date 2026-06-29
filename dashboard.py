@@ -1195,6 +1195,30 @@ def page_cover_letter():
 
 
 
+def _generate_cv(base_cv, title, org, desc, fmt_choice):
+    formats = ["latex", "docx"] if fmt_choice == "both" else [fmt_choice]
+    st.info(f"Rewriting **{base_cv}** CV for **{title}** @ {org}...")
+    with st.spinner("Generating CV (LaTeX compilation + DOCX conversion)..."):
+        try:
+            result = rewrite_cv(
+                base_cv_key=base_cv,
+                job_title=title,
+                job_description=desc or "",
+                organization=org,
+                formats=formats,
+            )
+            st.success("CV generated successfully!")
+            for fmt in formats:
+                r = result.get("format_results", {}).get(fmt, {})
+                if "error" in r:
+                    st.error(f"{fmt}: {r['error']}")
+                else:
+                    for ext, path in r.items():
+                        st.markdown(f"- [{fmt}.{ext}]({path})")
+        except Exception as e:
+            st.error(f"CV generation failed: {e}")
+
+
 def page_cv_writer():
     st.title(" CV Writer")
     st.markdown("Rewrite any CV to match a target job — outputs **LaTeX→PDF** and/or **DOCX→PDF**.")
@@ -1203,99 +1227,76 @@ def page_cv_writer():
     jobs_raw = load_job_data()
     jobs = [j for j in jobs_raw if is_valid_job(j)]
 
+    if "cvw_tab" not in st.session_state:
+        st.session_state.cvw_tab = "From Scanned Job"
+
     tab1, tab2 = st.tabs([" From Scanned Job", " Custom Entry"])
 
     with tab1:
-        if jobs:
-            job_options = [f"{i}. {j.get('title', '?')[:70]} @ {j.get('organization', '?')[:25]}"
-                           for i, j in enumerate(jobs)]
-            sel_idx = st.selectbox("Select a job", range(len(job_options)),
-                                    format_func=lambda i: job_options[i] if i < len(job_options) else "",
-                                    key="cvw_job_idx")
-            j = jobs[sel_idx]
-            st.markdown(f"**{j.get('title', '?')}**")
-            st.markdown(f"{j.get('organization', '?')} — {j.get('location', '?')}")
-
-            with st.expander("Job Description"):
-                desc = j.get("description", "No description available.")
-                st.text(desc[:2000] if desc else "N/A")
-        else:
+        if not jobs:
             st.warning("No jobs found. Run a scan first.")
             st.stop()
+        job_options = [f"{i}. {j.get('title', '?')[:70]} @ {j.get('organization', '?')[:25]}"
+                       for i, j in enumerate(jobs)]
+        sel_idx = st.selectbox("Select a job", range(len(job_options)),
+                                format_func=lambda i: job_options[i] if i < len(job_options) else "",
+                                key="cvw_job_idx")
+        selected_job = jobs[sel_idx]
+        st.markdown(f"**{selected_job.get('title', '?')}**")
+        st.markdown(f"{selected_job.get('organization', '?')} — {selected_job.get('location', '?')}")
+
+        with st.expander("Job Description"):
+            desc = selected_job.get("description", "No description available.")
+            st.text(desc[:2000] if desc else "N/A")
+
+        st.divider()
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            avail_cvs = list_available_cvs()
+            suggested = get_base_cv_for_job(selected_job.get("title", ""))
+            cv_options = avail_cvs
+            default_idx = cv_options.index(suggested) if suggested in cv_options else 0
+            base_cv = st.selectbox("Base CV", cv_options, index=default_idx,
+                                    help="Which CV to use as starting point", key="cvw_base_tab1")
+        with col2:
+            fmt_options = ["latex", "docx", "both"]
+            fmt_choice = st.selectbox("Output formats", fmt_options, index=2,
+                                       help="both = LaTeX PDF + DOCX PDF", key="cvw_fmt_tab1")
+        with col3:
+            st.markdown("### &nbsp;")
+            gen1 = st.button(" Generate Optimized CV", width="stretch", type="primary", key="cvw_gen1")
+
+        if gen1:
+            title = selected_job.get("title", "")
+            org = selected_job.get("organization", "")
+            desc = selected_job.get("description", "")
+            if title:
+                _generate_cv(base_cv, title, org, desc, fmt_choice)
 
     with tab2:
-        j = {}
-        j["title"] = st.text_input("Job Title", key="cvw_title")
-        j["organization"] = st.text_input("Organization", key="cvw_org")
-        j["description"] = st.text_area("Description (optional)", key="cvw_desc", height=150)
+        custom_title = st.text_input("Job Title", key="cvw_title")
+        custom_org = st.text_input("Organization", key="cvw_org")
+        custom_desc = st.text_area("Description (optional)", key="cvw_desc", height=150)
 
-    # Common controls
-    st.divider()
+        st.divider()
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            avail_cvs2 = list_available_cvs()
+            cv_options2 = avail_cvs2
+            base_cv2 = st.selectbox("Base CV", cv_options2, index=0,
+                                     help="Which CV to use as starting point", key="cvw_base_tab2")
+        with col2:
+            fmt_choice2 = st.selectbox("Output formats", ["latex", "docx", "both"], index=2,
+                                        key="cvw_fmt_tab2")
+        with col3:
+            st.markdown("### &nbsp;")
+            gen2 = st.button(" Generate Optimized CV", width="stretch", type="primary", key="cvw_gen2")
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        avail_cvs = list_available_cvs()
-        suggested = get_base_cv_for_job(j.get("title", ""))
-        cv_options = avail_cvs
-        default_idx = cv_options.index(suggested) if suggested in cv_options else 0
-        base_cv = st.selectbox("Base CV", cv_options, index=default_idx,
-                                help="Which CV to use as starting point")
-    with col2:
-        fmt_options = ["latex", "docx", "both"]
-        fmt_choice = st.selectbox("Output formats", fmt_options, index=2,
-                                   help="both = LaTeX PDF + DOCX PDF")
-    with col3:
-        st.markdown("### &nbsp;")
-        if st.button(" Generate Optimized CV", width="stretch", type="primary"):
-            title = j.get("title", "")
-            org = j.get("organization", "")
-            desc = j.get("description", "")
-
-            if not title:
+        if gen2:
+            if not custom_title:
                 st.warning("Job title is required.")
-                st.stop()
-
-            formats = ["latex", "docx"] if fmt_choice == "both" else [fmt_choice]
-            st.info(f"Rewriting **{base_cv}** CV for **{title}** @ {org}...")
-
-            with st.spinner("Generating CV (LaTeX compilation + DOCX conversion)..."):
-                try:
-                    result = rewrite_cv(
-                        base_cv_key=base_cv,
-                        job_title=title,
-                        job_description=desc or "",
-                        organization=org,
-                        formats=formats,
-                    )
-                    st.success("CV generated successfully!")
-
-                    for fmt in formats:
-                        r = result.get("format_results", {}).get(fmt, {})
-                        if "error" in r:
-                            st.error(f"{fmt}: {r['error']}")
-                        else:
-                            for ext, path in r.items():
-                                if Path(path).exists():
-                                    data = Path(path).read_bytes()
-                                    filename = Path(path).name
-                                    mime = {"pdf": "application/pdf", "tex": "text/plain",
-                                           "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}.get(ext, "")
-                                    st.download_button(
-                                        f" Download {fmt.upper()} {ext.upper()} ({Path(path).stat().st_size//1024} KB)",
-                                        data=data, file_name=filename, mime=mime,
-                                        use_container_width=True,
-                                    )
-
-                    # Show LaTeX preview
-                    if "latex_source" in result:
-                        with st.expander(" LaTeX Source Preview", expanded=False):
-                            st.code(result["latex_source"], language="latex")
-
-                except Exception as e:
-                    st.error(f"Error: {e}")
-
-    st.divider()
-    st.markdown("**Tip:** You can also use `cv write <N>` in the CLI with `--base` and `--formats` flags.")
+            else:
+                _generate_cv(base_cv2, custom_title, custom_org or "", custom_desc or "", fmt_choice2)
 
 
 def page_optimizer():
