@@ -1102,19 +1102,67 @@ def page_preferences():
         st.text(prefs_text)
 
     with tab2:
-        st.subheader("Change a Preference")
-        valid_keys = list(list_prefs().split("\n"))
-        with st.form("pref_form"):
-            if "pref_keys" not in st.session_state:
-                from profile import RAW_PROFILE
-                st.session_state.pref_keys = list(RAW_PROFILE.get("preferences", {}).keys())
-            key = st.selectbox("Preference", st.session_state.pref_keys)
-            value = st.text_input("New value", placeholder="e.g. True, 55000, 4")
-            submitted = st.form_submit_button(" Update")
-            if submitted and key and value:
-                result = set_preference(key, value)
-                st.success(result)
-                st.rerun()
+        st.subheader("Edit All Preferences")
+        from profile import RAW_PROFILE
+        prefs = get_preferences()
+        defaults = RAW_PROFILE.get("preferences", {})
+
+        changed = False
+        new_prefs = dict(prefs)
+
+        with st.form("pref_form_all", border=False):
+            st.markdown("**Work Type**")
+            new_prefs["remote"] = st.checkbox("Remote/Hybrid only", value=prefs.get("remote", defaults.get("remote", True)))
+            new_prefs["prefer_remote_first"] = st.checkbox("Prefer remote-first companies", value=prefs.get("prefer_remote_first", defaults.get("prefer_remote_first", True)))
+            new_prefs["prefer_flexible_hours"] = st.checkbox("Flexible hours", value=prefs.get("prefer_flexible_hours", defaults.get("prefer_flexible_hours", True)))
+            new_prefs["prefer_no_weekends"] = st.checkbox("No weekends", value=prefs.get("prefer_no_weekends", defaults.get("prefer_no_weekends", True)))
+
+            st.divider()
+            st.markdown("**Salary & Commute**")
+            new_prefs["min_salary_eur"] = st.number_input("Minimum salary (EUR/year)", min_value=0, max_value=500000, step=5000, value=prefs.get("min_salary_eur", defaults.get("min_salary_eur", 35000)))
+            new_prefs["max_commute_minutes"] = st.number_input("Max commute (minutes, 0 = remote only)", min_value=0, max_value=300, step=5, value=prefs.get("max_commute_minutes", defaults.get("max_commute_minutes", 90)))
+
+            st.divider()
+            st.markdown("**Location & Mobility**")
+            loc_options = {
+                "remote": "Remote only",
+                "italy_greece": "Italy / Greece",
+                "eu": "Anywhere in EU",
+                "anywhere": "Worldwide",
+                "europe_remote_or_sacrofano_100km": "Europe remote or local (100km radius)",
+            }
+            current_loc = prefs.get("location_flexibility", defaults.get("location_flexibility", "remote"))
+            loc_labels = list(loc_options.keys())
+            loc_idx = loc_labels.index(current_loc) if current_loc in loc_labels else 0
+            new_prefs["location_flexibility"] = st.selectbox("Location flexibility", options=loc_labels, format_func=lambda x: loc_options.get(x, x), index=loc_idx)
+            new_prefs["eu_mobility"] = st.checkbox("Open to working anywhere in EU", value=prefs.get("eu_mobility", defaults.get("eu_mobility", False)))
+
+            st.divider()
+            st.markdown("**Priorities (1–5)**")
+            col1, col2 = st.columns(2)
+            with col1:
+                new_prefs["work_life_balance"] = st.select_slider("Work-life balance", options=[1, 2, 3, 4, 5], value=prefs.get("work_life_balance", defaults.get("work_life_balance", 3)),
+                    help="1 = doesn't matter, 5 = critical", format_func=lambda x: {1: "1 — doesn't matter", 2: "2", 3: "3 — important", 4: "4", 5: "5 — critical"}[x])
+                new_prefs["family_proximity"] = st.select_slider("Family proximity", options=[1, 2, 3, 4, 5], value=prefs.get("family_proximity", defaults.get("family_proximity", 3)),
+                    help="1 = doesn't matter, 5 = must be near family", format_func=lambda x: {1: "1 — doesn't matter", 2: "2", 3: "3 — nice to have", 4: "4", 5: "5 — must have"}[x])
+            with col2:
+                new_prefs["stress_tolerance"] = st.select_slider("Stress tolerance", options=[1, 2, 3, 4, 5], value=prefs.get("stress_tolerance", defaults.get("stress_tolerance", 3)),
+                    help="1 = avoid all stress, 5 = thrive under pressure", format_func=lambda x: {1: "1 — avoid stress", 2: "2", 3: "3 — manageable", 4: "4", 5: "5 — thrive on it"}[x])
+                new_prefs["travel_opportunity"] = st.select_slider("Travel opportunity", options=[1, 2, 3, 4, 5], value=prefs.get("travel_opportunity", defaults.get("travel_opportunity", 3)),
+                    help="1 = never, 5 = as much as possible", format_func=lambda x: {1: "1 — never", 2: "2", 3: "3 — occasionally", 4: "4", 5: "5 — as much as possible"}[x])
+
+            new_prefs["prefer_industry"] = st.checkbox("Prefer industry over academia", value=prefs.get("prefer_industry", defaults.get("prefer_industry", True)))
+
+            st.divider()
+            submitted = st.form_submit_button(" Save All Preferences", type="primary")
+
+        if submitted:
+            from profile import save_profile, load_profile
+            profile = load_profile()
+            profile["preferences"] = new_prefs
+            save_profile(profile)
+            st.success("Preferences saved!")
+            st.rerun()
 
     st.divider()
     st.markdown("**Tip:** Run `plan` in the Career Plan tab to see how your preferences shape your recommended path.")
